@@ -131,7 +131,7 @@ flowchart TD
 
 ---
 
-**<div align="center" id="footer">© 2024 Refyne. All rights reserved. <div>**
+**<div align="center" id="footer">© 2026 Refyne. All rights reserved. <div>**
 <br>
 
 <div align="right"><a href="#">(Back to top)</a></div>
