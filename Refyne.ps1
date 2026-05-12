@@ -20,7 +20,7 @@ $ErrorCount = 0
 $FailedCommands = @()
 
 # Script Variables
-$CurrentVersion = "0.1.1-beta"
+$CurrentVersion = "0.1.4-beta"
 
 # Acceptance Variables
 $AcceptW10Risk = $false
@@ -141,10 +141,10 @@ function Get-ComputerHardwareSpecification {
                 }
                 $colSlots = Get-WmiObject -Class "win32_PhysicalMemoryArray" -namespace "root\CIMV2" -computerName $env:COMPUTERNAME
                 $TotalDIMMSlots = ($colSlots | Measure-Object -Property MemoryDevices -Sum).Sum
-                $qwMemorySize = (Get-ItemProperty -Path "HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name HardwareInformation.qwMemorySize -ErrorAction SilentlyContinue)."HardwareInformation.qwMemorySize"
-                $GpuName = (Get-ItemProperty -Path "HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name DriverDesc -ErrorAction SilentlyContinue)."DriverDesc"
+                $qwMemorySize = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name HardwareInformation.qwMemorySize -ErrorAction SilentlyContinue)."HardwareInformation.qwMemorySize"
+                $GpuName = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name DriverDesc -ErrorAction SilentlyContinue)."DriverDesc"
                 $script:Card = $GpuName
-                $GpuDriver = (Get-ItemProperty -Path "HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name DriverDate -ErrorAction SilentlyContinue)."DriverDate"
+                $GpuDriver = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -Name DriverDate -ErrorAction SilentlyContinue)."DriverDate"
                 $VRAM = [math]::round($qwMemorySize / 1GB)
                 $CleanCPUName = ($CPU | Select-Object -Property Name -First 1).Name -replace '\(R\)', ''
                 $CleanCPUName = $CleanCPUName -replace '\(TM\)', '' 
@@ -732,24 +732,22 @@ function Set-BCDTweaks {
 
     PROCESS {
         Write-StatusLine Info "Applying tweaks to Boot Configuration Device..."
-        Read-CommandStatus 'bcdedit /set useplatformtick no' "enable usage of platform ticks"
-        Read-CommandStatus 'bcdedit /set disabledynamictick yes' "disable dynamic platform ticks"
+        Read-CommandStatus 'bcdedit /set useplatformtick no' "disable usage of platform ticks"
+        Read-CommandStatus 'bcdedit /set disabledynamictick yes' "disable dynamic ticks"
         Read-CommandStatus 'bcdedit /set useplatformclock no' "disable use of platform clock-source"
         Read-CommandStatus 'bcdedit /set usefirmwarepcisettings no' "disable BIOS PCI device mapping"
         Read-CommandStatus 'bcdedit /set usephysicaldestination no' "disable physical APIC device mapping"
-        Read-CommandStatus 'bcdedit /set MSI Default' "default all devices to Messaged-signal Interrutps" # Can potentially cause issues with some hardware configurations
+        Read-CommandStatus 'bcdedit /set MSI Default' "default all devices to Messaged-signal Interrupts" # Can potentially cause issues with some hardware configurations
         Read-CommandStatus 'bcdedit /set configaccesspolicy Default' "default memory mapping policy"
         Read-CommandStatus 'bcdedit /set x2apicpolicy Enable' "enable modern APIC policy" # x2 is the preferred usage for modern systems, see -> https://wiki.osdev.org/APIC
         Read-CommandStatus 'bcdedit /set vm no' "disable virtualization"
         Read-CommandStatus 'bcdedit /set vsmlaunchtype Off' "disable Virtual Secure Mode" 
         Read-CommandStatus 'bcdedit /deletevalue uselegacyapicmode' "disable legacy APIC methods"
-        Read-CommandStatus 'bcdedit /set tscsyncpolicy Enhanced' "set TSC sync policy" # Synchonizes per-core TSC values
+        Read-CommandStatus 'bcdedit /set tscsyncpolicy Enhanced' "set TSC sync policy" # Synchronizes per-core TSC values
         Read-CommandStatus 'bcdedit /set linearaddress57 OptOut' "disable 57-bit linear addressing" 
-        # Read-CommandStatus 'bcdedit /set increaseuserva 268435328' "set virtual memory allocation" No idea why this was configured in the first place, we're not in PM.
         Read-CommandStatus 'bcdedit /set nx OptIn' "enable NX bit" # Used for DEP
         Read-CommandStatus 'bcdedit /set hypervisorlaunchtype off' "Disable Hypervisor" 
         Read-CommandStatus 'bcdedit /set isolatedcontext No' 'disable Hypervisor jailed memory context'
-        #Read-CommandStatus 'bcdedit /timeout 0' 'if no dual boot'
     }
     
     END {
@@ -781,26 +779,27 @@ function Set-Tweaks {
         Read-CommandStatus 'Start-Process -FilePath "cmd" -ArgumentList "/c wmic pagefileset where name="C" "\pagefile.sys" set InitialSize=12000,MaximumSize=16000" -Wait' "Set pagefile size to 12-16GB"
 
         Write-StatusLine Info "Applying tweaks to registry..."
-        Write-RegistryKey "HKLM:\System\ControlSet001\Control\PriorityControl" "Win32PrioritySeparation" "DWord" "42"
-        Write-RegistryKey "HKLM:\System\ControlSet001\Control\PriorityControl" "EnableVirtualizationBasedSecurity" "DWord" "0"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\mouclass\Parameters" "TreatAbsolutePointerAsAbsolute" "DWord" "1"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\mouhid\Parameters" "TreatAbsoluteAsRelative" "DWord" "0"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\kbdclass\Parameters" "Status" "DWord" "0"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" "DWord" "42"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\mouhid\Parameters" "TreatAbsolutePointerAsAbsolute" "DWord" "1"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize" "DWord" "20"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\kbdclass\Parameters" "KeyboardDataQueueSize" "DWord" "20"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\lfsvc\Service\Configuration" "Status" "DWord" "0"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Services\GpuEnergyDrv" "Start" "DWord" "2"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control" "SvcHostSplitThresholdInKB" "DWord" "4294967295"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" "GlobalTimerResolutionRequests" "DWord" "1"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Power" "HiberbootEnabled" "DWord" "0"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager" "HeapDeCommitFreeBlockThreshold" "DWord" "262144"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettings" "DWord" "1"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettingsOverride" "DWord" "3"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettingsOverrideMask" "DWord" "3"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Segment Heap" "Enabled" "DWord" "1" # https://blog.s-schoener.com/2024-11-05-segment-heap/
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\FileSystem\" "LongPathsEnabled" "DWord" "0"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers\Scheduler" "EnablePreemption" "DWord" "1"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers" "PlatformSupportMiracast" "DWord" "0"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Power\PowerThrottling" "PowerThrottlingOff" "DWord" "1"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" "DWord" "2"
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Power\PowerThrottling" "PowerThrottlingOff" "DWord" "1"    
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\CrashControl" "DisplayParameters" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\AppCompat" "AITEnable" "DWord" "0"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers" "DpiMapIommuContiguous" "DWord" "1"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "DisablePagingExecutive" "DWord" "1"
-        #Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "LargeSystemCache" "DWord" "1" # only for server?
+        # Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "DisablePagingExecutive" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" "Value" "String" "Deny"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" "DWord" "0"
         Write-RegistryKey "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "ContentDeliveryAllowed" "DWord" "0"
@@ -818,13 +817,15 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\System" "UploadUserActivities" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\CloudContent" "DisableSoftLanding" "DWord" "1"
+        Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled" "DWord" "1"
+        Write-RegistryKey "HKLM:\Software\Policies\Microsoft\SQMClient\Windows" "CEIPEnable" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Reliability" "TimeStampInterval" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}" "SensorPermissionState" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" "CpuPriorityClass" "DWord" "4"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" "IoPriority" "DWord" "3"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NoLazyMode" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "AlwaysOn" "DWord" "1"
-        Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" "DWord" "0"
+        Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" "DWord" "10"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "Scheduling Category" "String" "High"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "GPU Priority" "DWord" "8"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "Priority" "DWord" "6"
@@ -833,12 +834,13 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" "EnableVirtualizationBasedSecurity" "DWord" "0"
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" "HVCIMATRequired" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer" "Max Cached Icons" "String" "4096"
-        Write-RegistryKey "HKLM:\Software\Microsoft\Windows\Dwm\" "OverlayTestMode" "DWord" "5"
+        # Write-RegistryKey "HKLM:\Software\Microsoft\Windows\Dwm\" "OverlayTestMode" "DWord" "5"
         Write-RegistryKey "HKLM:\System\Maps" "AutoUpdateEnabled" "DWord" "0"
         Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AllowAutoGameMode" "DWord" "1"
         Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AutoGameModeEnabled" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\EMET\SysSettings" "SEHOP" "DWord" "3" # https://admx.help/?Category=EMET&Policy=Microsoft.Policies.EMET::SEHOP
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\InputPersonalization" "RestrictImplicitTextCollection" "DWord" "1"
+        Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\InputPersonalization" "RestrictImplicitInkCollection" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\StorageHealth" "AllowDiskHealthModelUpdates" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\Group Policy\{35378EAC-683F-11D2-A89A-00C04FBBCFA2}" "NoBackgroundPolicy" "DWord" "1"
@@ -897,7 +899,7 @@ function Set-RegistryTweaksNVIDIA {
 
     BEGIN {
         Write-StatusLine Info "Applying NVIDIA-focused driver tweaks to registry..."
-        $NVIDIARegistryPath = (reg query "HKLM\System\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /t REG_SZ /s /e /f "NVIDIA" | findstr "HKEY" | Select-Object -First 1)
+        $NVIDIARegistryPath = (reg query "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /t REG_SZ /s /e /f "NVIDIA" | findstr "HKEY" | Select-Object -First 1)
     }
 
     PROCESS {
@@ -952,6 +954,8 @@ function Set-RegistryTweaksAMD {
                 Write-RegistryKey "$($line)" "AllowSkins" "String" "false"
                 Write-RegistryKey "$($line)" "AllowSnapshot" "DWord" "0"
                 Write-RegistryKey "$($line)" "AllowSubscription" "DWord" "0"
+                Write-RegistryKey "$($line)" "AreaAniso_NA" "DWord" "0"
+                Write-RegistryKey "$($line)" "ASTT_NA" "DWord" "0"
                 Write-RegistryKey "$($line)" "AutoColorDepthReduction_NA" "DWord" "0"
                 Write-RegistryKey "$($line)" "DisableSAMUPowerGating" "DWord" "1"
                 Write-RegistryKey "$($line)" "DisableUVDPowerGatingDynamic" "DWord" "1"
@@ -962,22 +966,19 @@ function Set-RegistryTweaksAMD {
                 Write-RegistryKey "$($line)" "KMD_DeLagEnabled" "DWord" "1"
                 Write-RegistryKey "$($line)" "EnableUlps_NA" "String" "0"
                 Write-RegistryKey "$($line)" "KMD_FRTEnabled" "Dword" "0"
-                Write-RegistryKey "$($line)" "DisableDMACopy" "DWord" "1"
-                Write-RegistryKey "$($line)" "DisableBlockWrite" "DWord" "0"
                 Write-RegistryKey "$($line)" "StutterMode" "DWord" "0"
-                Write-RegistryKey "$($line)" "EnableUlps" "DWord" "0"
                 Write-RegistryKey "$($line)" "PP_SclkDeepSleepDisable" "DWord" "1"
-                Write-RegistryKey "$($line)" "PP_ThermalAutoThrottlingEnable" "DWord" "0"
                 Write-RegistryKey "$($line)" "DisableDrmdmaPowerGating" "DWord" "1"
                 Write-RegistryKey "$($line)" "KMD_EnableComputePreemption" "DWord" "0"
+                Write-RegistryKey "$($line)" "3D_Refresh_Rate_Override_DEF" "DWord" "0"
                 Write-RegistryKey "$($line)\UMD" "Main3D_DEF" "String" "1"
-                Write-BinaryRegistry "$($line)\UMD" "Main3D" ([byte[]](0x32, 0x00))
+                Write-BinaryRegistry "$($line)\UMD" "Main3D" ([byte[]](0x31, 0x00))
                 Write-BinaryRegistry "$($line)\UMD" "ShaderCache" ([byte[]](0x32, 0x00))
                 Write-BinaryRegistry "$($line)\UMD" "Tessellation_OPTION" ([byte[]](0x32, 0x00))
                 Write-BinaryRegistry "$($line)\UMD" "Tessellation" ([byte[]](0x31, 0x00))
                 Write-BinaryRegistry "$($line)\UMD" "VSyncControl" ([byte[]](0x30, 0x00))
                 Write-BinaryRegistry "$($line)\UMD" "TFQ" ([byte[]](0x32, 0x00))
-                Write-RegistryKey "$($line)\UMD" "3D_Refresh_Rate_Override_DEF" "DWord" "0"
+                Write-BinaryRegistry "$($line)\UMD" "FlipQueueSize" ([byte[]](0x31, 0x00))
             }   
         }
     }
@@ -1040,7 +1041,7 @@ function Set-RegistryTweaksInterrupts {
             Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "AllowIdleIrpInD3" "DWord" "0"
             Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "EnableSelectiveSuspend" "DWord" "0"
             Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "DeviceSelectiveSuspended" "DWord" "0"
-            Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "SelectiveSuspendEnabled" "DWord" "0"
+            Write-BinaryRegistry "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "SelectiveSuspendEnabled" ([byte[]](0x00))
             Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "SelectiveSuspendOn" "DWord" "0"
             Write-RegistryKey "HKLM:\System\CurrentControlSet\Enum\$($lineclean)\Device` Parameters" "D3ColdSupported" "DWord" "0"
         }
@@ -1072,35 +1073,17 @@ function Set-NetworkTweaks {
     PROCESS {
         foreach ($regline in $nics4) {
             $line = Convert-RegistryPath $regline
-            Write-RegistryKey "$($line)" "TCPNoDelay" "DWord" "1"
             Write-RegistryKey "$($line)" "TcpAckFrequency" "DWord" "1"
             Write-RegistryKey "$($line)" "TcpDelAckTicks" "DWord" "0"
-            Write-RegistryKey "$($line)" "TcpInitialRTT" "DWord" "300"
-            Write-RegistryKey "$($line)" "TcpMaxDupAcks" "DWord" "2" # https://techcommunity.microsoft.com/t5/networking-blog/algorithmic-improvements-boost-tcp-performance-on-the-internet/ba-p/2347061
-            Write-RegistryKey "$($line)" "SynAttackProtect" "DWord" "1" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_SynAttackProtect
-            Write-RegistryKey "$($line)" "TCPMaxConnectResponseRetransmissions" "DWord" "2" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_TcpMaxConnectResponseRetransmissions
             Write-RegistryKey "$($line)" "TcpMaxDataRetransmissions" "DWord" "3" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_TcpMaxDataRetransmissions
-            Write-RegistryKey "$($line)" "TcpMaxHalfOpen" "DWord" "100" # TCP Hardening
-            Write-RegistryKey "$($line)" "TcpMaxHalfOpenRetried" "DWord" "80" # TCP Hardening
-            Write-RegistryKey "$($line)" "TcpMaxPortsExhausted" "DWord" "5" # TCP Hardening
-            Write-RegistryKey "$($line)" "EnableDeadGWDetect" "DWord" "0" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_EnableDeadGWDetect
             Write-RegistryKey "$($line)" "DisableIPSourceRouting" "DWord" "1" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_DisableIPSourceRouting
         }
 
         foreach ($regline in $nics6) {
             $line = Convert-RegistryPath $regline
-            Write-RegistryKey "$($line)" "TCPNoDelay" "DWord" "1"
             Write-RegistryKey "$($line)" "TcpAckFrequency" "DWord" "1"
             Write-RegistryKey "$($line)" "TcpDelAckTicks" "DWord" "0"
-            Write-RegistryKey "$($line)" "TcpInitialRTT" "DWord" "300"
-            Write-RegistryKey "$($line)" "TcpMaxDupAcks" "DWord" "2" # https://techcommunity.microsoft.com/t5/networking-blog/algorithmic-improvements-boost-tcp-performance-on-the-internet/ba-p/2347061
-            Write-RegistryKey "$($line)" "SynAttackProtect" "DWord" "1" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_SynAttackProtect
-            Write-RegistryKey "$($line)" "TCPMaxConnectResponseRetransmissions" "DWord" "2" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_TcpMaxConnectResponseRetransmissions
             Write-RegistryKey "$($line)" "TcpMaxDataRetransmissions" "DWord" "3" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_TcpMaxDataRetransmissions
-            Write-RegistryKey "$($line)" "TcpMaxHalfOpen" "DWord" "100" # TCP Hardening
-            Write-RegistryKey "$($line)" "TcpMaxHalfOpenRetried" "DWord" "80" # TCP Hardening
-            Write-RegistryKey "$($line)" "TcpMaxPortsExhausted" "DWord" "5" # TCP Hardening
-            Write-RegistryKey "$($line)" "EnableDeadGWDetect" "DWord" "0" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_EnableDeadGWDetect
             Write-RegistryKey "$($line)" "DisableIPSourceRouting" "DWord" "1" # TCP Hardening -> https://admx.help/?Category=security-compliance-toolkit&Policy=Microsoft.Policies.MSS::Pol_MSS_DisableIPSourceRouting      
         }
     }
@@ -1175,7 +1158,7 @@ function Write-MainMenuStart {
             }
             elseif ($Choice -eq "4") {
                 Clear-Host
-                Read-CommandStatus "irm https://massgrave.dev/get | iex" "activate Windows using MAS (https://github.com/massgravel/Microsoft-Activation-Scripts) <3"
+                Read-CommandStatus "irm https://get.activated.win | iex" "activate Windows using MAS (https://github.com/massgravel/Microsoft-Activation-Scripts) <3"
             }
             elseif ($Choice -eq "5") {
                 Clear-Host
