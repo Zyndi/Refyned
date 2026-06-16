@@ -732,11 +732,11 @@ function Set-BCDTweaks {
 
     PROCESS {
         Write-StatusLine Info "Applying tweaks to Boot Configuration Device..."
-        Read-CommandStatus 'bcdedit /set useplatformtick no' "disable usage of platform ticks"
-        Read-CommandStatus 'bcdedit /set disabledynamictick yes' "disable dynamic ticks"
-        Read-CommandStatus 'bcdedit /set useplatformclock no' "disable use of platform clock-source"
-        Read-CommandStatus 'bcdedit /set usefirmwarepcisettings no' "disable BIOS PCI device mapping"
-        Read-CommandStatus 'bcdedit /set usephysicaldestination no' "disable physical APIC device mapping"
+        # Read-CommandStatus 'bcdedit /set useplatformtick no' "disable usage of platform ticks" # W11 forces the usage of platform ticks
+        # Read-CommandStatus 'bcdedit /set disabledynamictick yes' "disable dynamic ticks" # This does nothing, RTC is not a dynamic tick per-standard
+        # Read-CommandStatus 'bcdedit /set useplatformclock no' "disable use of platform clock-source" # W11 forces the use of platform clock-source
+        # Read-CommandStatus 'bcdedit /set usefirmwarepcisettings no' "disable BIOS PCI device mapping" # Only useful for troubleshooting
+        # Read-CommandStatus 'bcdedit /set usephysicaldestination no' "disable physical APIC device mapping" # Only useful for troubleshooting
         Read-CommandStatus 'bcdedit /set MSI Default' "default all devices to Messaged-signal Interrupts" # Can potentially cause issues with some hardware configurations
         Read-CommandStatus 'bcdedit /set configaccesspolicy Default' "default memory mapping policy"
         Read-CommandStatus 'bcdedit /set x2apicpolicy Enable' "enable modern APIC policy" # x2 is the preferred usage for modern systems, see -> https://wiki.osdev.org/APIC
@@ -791,15 +791,14 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettings" "DWord" "1"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettingsOverride" "DWord" "3"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "FeatureSettingsOverrideMask" "DWord" "3"
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Segment Heap" "Enabled" "DWord" "1" # https://blog.s-schoener.com/2024-11-05-segment-heap/
-        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\FileSystem\" "LongPathsEnabled" "DWord" "0"
+        # Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Segment Heap" "Enabled" "DWord" "1" # Can cause issues for some games with anticheat, use with caution. https://blog.s-schoener.com/2024-11-05-segment-heap/
+        Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" "DWord" "0"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers\Scheduler" "EnablePreemption" "DWord" "1"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers" "PlatformSupportMiracast" "DWord" "0"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" "DWord" "2"
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Power\PowerThrottling" "PowerThrottlingOff" "DWord" "1"    
         Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\CrashControl" "DisplayParameters" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\AppCompat" "AITEnable" "DWord" "0"
-        # Write-RegistryKey "HKLM:\System\CurrentControlSet\Control\Session Manager\Memory Management" "DisablePagingExecutive" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" "Value" "String" "Deny"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" "DWord" "0"
         Write-RegistryKey "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "ContentDeliveryAllowed" "DWord" "0"
@@ -826,15 +825,12 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NoLazyMode" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "AlwaysOn" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" "DWord" "10"
-        Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "Scheduling Category" "String" "High"
-        Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "GPU Priority" "DWord" "8"
-        Write-RegistryKey "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" "Priority" "DWord" "6"
         Write-RegistryKey "HKLM:\Software\Microsoft\FTH" "Enabled" "DWord" "0"
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\FVE" "DisableExternalDMAUnderLock" "DWord" "0"
-        Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" "EnableVirtualizationBasedSecurity" "DWord" "0"
+        Write-RegistryKey "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity" "DWord" "0"
+        Write-RegistryKey "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled" "DWord" "0"
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" "HVCIMATRequired" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer" "Max Cached Icons" "String" "4096"
-        # Write-RegistryKey "HKLM:\Software\Microsoft\Windows\Dwm\" "OverlayTestMode" "DWord" "5"
         Write-RegistryKey "HKLM:\System\Maps" "AutoUpdateEnabled" "DWord" "0"
         Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AllowAutoGameMode" "DWord" "1"
         Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AutoGameModeEnabled" "DWord" "1"
@@ -845,7 +841,8 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\Windows\Group Policy\{35378EAC-683F-11D2-A89A-00C04FBBCFA2}" "NoBackgroundPolicy" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" "DisableBkGndGroupPolicy" "DWord" "1" # Prevents background group policy processing
-        Remove-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace_41040327\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" $false "" "Removed Gallery shortcut from explorer"
+        Write-RegistryKey "HKCU:\Software\Classes\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" "System.IsPinnedToNameSpaceTree" "DWord" "0"
+        Remove-RegistryKey "HKLM:\Software\Microsoft\RADAR"
         Read-CommandStatus "fsutil behavior set disable8dot3 1" "disabled 8.3 legacy file system"
         Read-CommandStatus "fsutil behavior set disabledeletenotify 0" "forced TRIM enabled"
         Read-CommandStatus "fsutil behavior set quotanotify 5400" "raised quota timer for quota violation notifications"
