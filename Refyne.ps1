@@ -726,12 +726,12 @@ function Set-BCDTweaks {
     
     BEGIN {
         $script:ErrorCount = 0
-        Write-StatusLine Info "back up Boot Configuration Device"
+        Write-StatusLine Info "back up Boot Configuration Data"
         Backup-BCDStorage
     }
 
     PROCESS {
-        Write-StatusLine Info "Applying tweaks to Boot Configuration Device..."
+        Write-StatusLine Info "Applying tweaks to Boot Configuration Data..."
         # Read-CommandStatus 'bcdedit /set useplatformtick no' "disable usage of platform ticks" # W11 forces the usage of platform ticks
         # Read-CommandStatus 'bcdedit /set disabledynamictick yes' "disable dynamic ticks" # This does nothing, RTC is not a dynamic tick per-standard
         # Read-CommandStatus 'bcdedit /set useplatformclock no' "disable use of platform clock-source" # W11 forces the use of platform clock-source
