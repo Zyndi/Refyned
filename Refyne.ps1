@@ -743,7 +743,7 @@ function Set-BCDTweaks {
         Read-CommandStatus 'bcdedit /set vm no' "disable virtualization"
         Read-CommandStatus 'bcdedit /set vsmlaunchtype Off' "disable Virtual Secure Mode" 
         Read-CommandStatus 'bcdedit /deletevalue uselegacyapicmode' "disable legacy APIC methods"
-        Read-CommandStatus 'bcdedit /set tscsyncpolicy Enhanced' "set TSC sync policy" # Synchronizes per-core TSC values
+        # Read-CommandStatus 'bcdedit /set tscsyncpolicy Enhanced' "set TSC sync policy" # Synchronizes per-core TSC values, but since RTC is forced this doesn't matter
         Read-CommandStatus 'bcdedit /set linearaddress57 OptOut' "disable 57-bit linear addressing" 
         Read-CommandStatus 'bcdedit /set nx OptIn' "enable NX bit" # Used for DEP
         Read-CommandStatus 'bcdedit /set hypervisorlaunchtype off' "Disable Hypervisor" 
