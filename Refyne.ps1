@@ -832,7 +832,6 @@ function Set-Tweaks {
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" "HVCIMATRequired" "DWord" "0"
         Write-RegistryKey "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer" "Max Cached Icons" "String" "4096"
         Write-RegistryKey "HKLM:\System\Maps" "AutoUpdateEnabled" "DWord" "0"
-        Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AllowAutoGameMode" "DWord" "1"
         Write-RegistryKey "HKCU:\Software\Microsoft\GameBar" "AutoGameModeEnabled" "DWord" "1"
         Write-RegistryKey "HKLM:\Software\Policies\Microsoft\EMET\SysSettings" "SEHOP" "DWord" "3" # https://admx.help/?Category=EMET&Policy=Microsoft.Policies.EMET::SEHOP
         Write-RegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\InputPersonalization" "RestrictImplicitTextCollection" "DWord" "1"
