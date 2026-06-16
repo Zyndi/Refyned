@@ -738,7 +738,7 @@ function Set-BCDTweaks {
         # Read-CommandStatus 'bcdedit /set usefirmwarepcisettings no' "disable BIOS PCI device mapping" # Only useful for troubleshooting
         # Read-CommandStatus 'bcdedit /set usephysicaldestination no' "disable physical APIC device mapping" # Only useful for troubleshooting
         Read-CommandStatus 'bcdedit /set MSI Default' "default all devices to Messaged-signal Interrupts" # Can potentially cause issues with some hardware configurations
-        Read-CommandStatus 'bcdedit /set configaccesspolicy Default' "default memory mapping policy"
+        # Read-CommandStatus 'bcdedit /set configaccesspolicy Default' "default memory mapping policy" # Just an extension to usephysicaldestination
         Read-CommandStatus 'bcdedit /set x2apicpolicy Enable' "enable modern APIC policy" # x2 is the preferred usage for modern systems, see -> https://wiki.osdev.org/APIC
         Read-CommandStatus 'bcdedit /set vm no' "disable virtualization"
         Read-CommandStatus 'bcdedit /set vsmlaunchtype Off' "disable Virtual Secure Mode" 
